@@ -8,7 +8,9 @@ An end-to-end analytics engineering platform built on the [Olist Brazilian E-Com
 
 ## Context
 
-This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
+This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). The architecture and migration plan were designed prior to implementation
+and are documented in the [Roadmap](#roadmap) section below.
+Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
 
 If you are not familiar with Phase 1, it is recommended to review it first: [olist-data-warehouse](https://github.com/cardonajsebas/olist-data-warehouse).
 
@@ -16,7 +18,7 @@ If you are not familiar with Phase 1, it is recommended to review it first: [oli
 
 ## Architecture
 
-<!-- TODO: Add architecture diagram (docs/architecture.drawio) -->
+![Data Architecture Diagram](docs/data_architecture.png)
 
 | Layer | Tool | Description |
 |---|---|---|
