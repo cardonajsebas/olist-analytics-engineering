@@ -1,0 +1,53 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: olist-analytics-eng
+    schema: bronze
+    description: >
+      Raw data ingested from GCS source files with no transformations applied.
+      All columns are stored as STRING to preserve raw data integrity.
+      Loaded via the Python ingestion script using a truncate-and-insert strategy.
+
+    tables:
+      - name: crm_order_reviews
+        description: >
+          Raw customer reviews for orders. Contains free-text comment fields
+          with embedded newlines, handled during ingestion with allow_quoted_newlines.
+
+      - name: crm_customers
+        description: >
+          Raw customer records including location data by zip code prefix.
+
+      - name: erp_geolocation
+        description: >
+          Raw geolocation coordinates by zip code prefix. Contains ~1M rows
+          including duplicates and coordinates outside Brazil bounds.
+
+      - name: erp_order_items
+        description: >
+          Raw order line items with product, seller, price, and freight data.
+          Grain is one row per order item.
+
+      - name: erp_order_payments
+        description: >
+          Raw payment records per order. An order may have multiple payment
+          entries across different payment types or installments.
+
+      - name: erp_orders
+        description: >
+          Raw order headers with status and timestamp data. Core fact entity
+          linking customers to their orders.
+
+      - name: erp_products
+        description: >
+          Raw product catalog. Contains column name typos from the source system
+          (name_lenght, description_lenght) preserved intentionally at this layer.
+
+      - name: erp_sellers
+        description: >
+          Raw seller records including location data by zip code prefix.
+
+      - name: erp_product_category_name_translation
+        description: >
+          Raw mapping table from Portuguese product category names to English.
