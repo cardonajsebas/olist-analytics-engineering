@@ -1,3 +1,8 @@
 *.json
 .env
 .venv/
+
+# dbt
+olist_dbt/target/
+olist_dbt/dbt_packages/
+olist_dbt/logs/
