@@ -1,0 +1,12 @@
+olist_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: YOUR_GCP_PROJECT_ID
+      dataset: silver
+      threads: 4
+      keyfile: /path/to/your/service-account-key.json
+      location: us-central1
+      timeout_seconds: 300

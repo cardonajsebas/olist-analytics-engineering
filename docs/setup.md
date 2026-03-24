@@ -33,3 +33,27 @@ To upload source files:
 gsutil -m cp /path/to/datasets/*.csv gs://olist-analytics-eng-raw/raw/olist/
 ```
 
+
+## dbt Setup
+
+dbt Core connects to BigQuery using a `profiles.yml` file stored locally at `~/.dbt/profiles.yml`.
+This file is not committed to the repository as it contains local paths and credentials.
+A reference template is available at `olist_dbt/profiles.yml.example`.
+
+### Steps
+
+1. Copy the example profile and edit it with your local values:
+```bash
+   cp olist_dbt/profiles.yml.example ~/.dbt/profiles.yml
+```
+
+2. Update the following fields in `~/.dbt/profiles.yml`:
+   - `project` - your GCP project ID
+   - `keyfile` - absolute path to your service account JSON key
+
+3. From the `olist_dbt/` directory, validate the connection:
+```bash
+   dbt debug --profiles-dir ~/.dbt
+```
+   All checks should return `OK`.
+
