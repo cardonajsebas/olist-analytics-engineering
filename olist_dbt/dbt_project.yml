@@ -1,3 +1,9 @@
+# olist_dbt - Analytics Engineering Project
+# Materialization strategy:
+#   bronze: table  - referenced as dbt sources, not built by dbt
+#   silver: table  - cleaning and standardization, full refresh
+#   gold:   view   - Star Schema, derived from Silver at query time
+
 name: olist_dbt
 version: 1.0.0
 config-version: 2
@@ -25,4 +31,3 @@ models:
     gold:
       +materialized: view
       +schema: gold
-

@@ -8,11 +8,11 @@ An end-to-end analytics engineering platform built on the [Olist Brazilian E-Com
 
 ## Context
 
-This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). The architecture and migration plan were designed prior to implementation
-and are documented in the [Roadmap](#roadmap) section below.
-Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
+This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). 
+The architecture and migration plan were designed prior to implementation and are documented in the [Roadmap](#roadmap) section below. Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
 
-If you are not familiar with Phase 1, it is recommended to review it first: [olist-data-warehouse](https://github.com/cardonajsebas/olist-data-warehouse).
+If you are not familiar with Phase 1, it is recommended to review it first: 
+[olist-data-warehouse](https://github.com/cardonajsebas/olist-data-warehouse).
 
 ---
 
@@ -63,8 +63,8 @@ This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/ol
 | Milestone | Description | Status |
 |---|---|---|
 | 1 - GCP Foundation & Raw Ingestion | Cloud infrastructure setup and raw data loading into BigQuery Bronze | Done |
-| 2 - dbt Setup & Silver Layer | dbt project initialization and Bronze-to-Silver transformation models | In progress |
-| 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | Planned |
+| 2 - dbt Setup & Silver Layer | dbt project initialization and Bronze-to-Silver transformation models | Done |
+| 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | In progress |
 | 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | Planned |
 | 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | Planned |
 
@@ -102,20 +102,47 @@ olist-analytics-engineering/
 
 ## Prerequisites
 
-<!-- TODO: Fill in during Milestone 1 -->
-
 - GCP account with billing enabled
-- `gcloud` CLI installed and authenticated
+- `gcloud` CLI installed and authenticated (`gcloud auth login`)
 - Python 3.10+
 - dbt Core with BigQuery adapter (`dbt-bigquery`)
+- A service account JSON key with the following roles:
+  - `roles/storage.objectAdmin`
+  - `roles/bigquery.dataEditor`
+  - `roles/bigquery.jobUser`
+
+See [docs/setup.md](docs/setup.md) for step-by-step setup instructions.
 
 ---
 
 ## How to Run
 
-<!-- TODO: Fill in progressively as each milestone is completed -->
+### 1. Environment setup
+Follow [docs/setup.md](docs/setup.md) to configure GCP credentials and the dbt profile.
 
-Setup instructions will be added here as each milestone is completed.
+### 2. Install dependencies
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Load Bronze layer
+```bash
+python ingestion/load_bronze.py
+```
+
+### 4. Run Silver models
+```bash
+cd olist_dbt
+dbt run --select 'silver' --profiles-dir ~/.dbt
+```
+
+### 5. Validate Bronze load
+```bash
+bq query --project_id=YOUR_PROJECT_ID --use_legacy_sql=false \
+  < ingestion/validation/validate_row_counts.sql
+```
 
 ---
 

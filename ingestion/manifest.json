@@ -1,0 +1,43 @@
+{
+    "tables": [
+    {
+        "table_id": "crm_order_reviews",
+        "gcs_path": "raw/olist/crm/olist_order_reviews_dataset.csv",
+        "options": {
+            "allow_quoted_newlines": true
+        }
+    },
+    {
+        "table_id": "crm_customers",
+        "gcs_path": "raw/olist/crm/olist_customers_dataset.csv"
+    },
+    {
+        "table_id": "erp_geolocation",
+        "gcs_path": "raw/olist/erp/olist_geolocation_dataset.csv"
+    },
+    {
+        "table_id": "erp_order_items",
+        "gcs_path": "raw/olist/erp/olist_order_items_dataset.csv"
+    },
+    {
+        "table_id": "erp_order_payments",
+        "gcs_path": "raw/olist/erp/olist_order_payments_dataset.csv"
+    },
+    {
+        "table_id": "erp_orders",
+        "gcs_path": "raw/olist/erp/olist_orders_dataset.csv"
+    },
+    {
+        "table_id": "erp_products",
+        "gcs_path": "raw/olist/erp/olist_products_dataset.csv"
+    },
+    {
+        "table_id": "erp_sellers",
+        "gcs_path": "raw/olist/erp/olist_sellers_dataset.csv"
+    },
+    {
+        "table_id": "erp_product_category_name_translation",
+        "gcs_path": "raw/olist/erp/product_category_name_translation.csv"
+    }
+    ]
+}

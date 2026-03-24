@@ -1,6 +1,14 @@
-*.json
+# Environment
 .env
 .venv/
+
+# GCP credentials - key files only, not project config
+*-sa.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
 
 # dbt
 olist_dbt/target/
