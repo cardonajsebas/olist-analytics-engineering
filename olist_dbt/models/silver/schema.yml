@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: crm_customers
+    description: >
+      Cleaned and standardized customer records. Zip codes are left-padded to
+      5 characters, city names are lowercased and trimmed, state codes are
+      uppercased. Rows with null customer_id are excluded.
+    columns:
+      - name: customer_id
+        description: Primary key. Unique identifier for the customer in this order context.
+      - name: customer_unique_id
+        description: Persistent customer identifier across multiple orders.
+      - name: customer_zip_code_prefix
+        description: 5-character zip code prefix, left-padded with zeros.
+      - name: customer_city
+        description: Customer city, lowercased and trimmed.
+      - name: customer_state
+        description: Customer state code, uppercased (2 characters).
+
+  - name: crm_order_reviews
+    description: >
+      Cleaned customer review records. Review score validated to range 1-5,
+      out-of-range values set to null. Empty comment fields converted to null.
+      Rows missing review_id or order_id are excluded.
+    columns:
+      - name: review_id
+        description: Primary key. Unique identifier for the review.
+      - name: order_id
+        description: Foreign key to erp_orders.
+      - name: review_score
+        description: Customer satisfaction score from 1 to 5. Null if original value was out of range.
+      - name: review_comment_title
+        description: Optional review title. Null if empty in source.
+      - name: review_comment_message
+        description: Optional review body text. Null if empty in source.
+      - name: review_creation_date
+        description: Timestamp when the review was created.
+      - name: review_answer_timestamp
+        description: Timestamp when the review was answered.

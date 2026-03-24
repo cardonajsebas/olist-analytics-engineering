@@ -5,7 +5,7 @@ olist_dbt:
       type: bigquery
       method: service-account
       project: YOUR_GCP_PROJECT_ID
-      dataset: silver
+      dataset: dev
       threads: 4
       keyfile: /path/to/your/service-account-key.json
       location: us-central1
