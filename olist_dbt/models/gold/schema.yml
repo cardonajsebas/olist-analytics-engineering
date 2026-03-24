@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: >
+      Customer dimension enriched with geolocation coordinates. Joins
+      crm_customers with erp_geolocation on zip code prefix. One row per
+      customer_id.
+    columns:
+      - name: customer_id
+        description: Primary key. Unique customer identifier per order context.
+      - name: customer_unique_id
+        description: Persistent customer identifier across multiple orders.
+      - name: customer_zip_code_prefix
+        description: 5-character zip code prefix.
+      - name: customer_city
+        description: Customer city, lowercased.
+      - name: customer_state
+        description: Customer state code, uppercased.
+      - name: customer_lat
+        description: Latitude coordinate from geolocation. Null if zip code not found.
+      - name: customer_lng
+        description: Longitude coordinate from geolocation. Null if zip code not found.
+
+  - name: dim_sellers
+    description: >
+      Seller dimension enriched with geolocation coordinates. Joins
+      erp_sellers with erp_geolocation on zip code prefix. One row per
+      seller_id.
+    columns:
+      - name: seller_id
+        description: Primary key. Unique seller identifier.
+      - name: seller_zip_code_prefix
+        description: 5-character zip code prefix.
+      - name: seller_city
+        description: Seller city, lowercased.
+      - name: seller_state
+        description: Seller state code, uppercased.
+      - name: seller_lat
+        description: Latitude coordinate from geolocation. Null if zip code not found.
+      - name: seller_lng
+        description: Longitude coordinate from geolocation. Null if zip code not found.
+
+  - name: dim_products
+    description: >
+      Product dimension enriched with English category names. Joins
+      erp_products with erp_product_category_name_translation. Falls back
+      to Portuguese category name if no translation exists. One row per
+      product_id.
+    columns:
+      - name: product_id
+        description: Primary key. Unique product identifier.
+      - name: product_category_name
+        description: Product category in Portuguese.
+      - name: product_category_name_english
+        description: Product category in English. Falls back to Portuguese if no translation found.
+      - name: product_name_length
+        description: Character count of the product name.
+      - name: product_description_length
+        description: Character count of the product description.
+      - name: product_photos_qty
+        description: Number of product photos.
+      - name: product_weight_g
+        description: Product weight in grams.
+      - name: product_length_cm
+        description: Product length in centimeters.
+      - name: product_height_cm
+        description: Product height in centimeters.
+      - name: product_width_cm
+        description: Product width in centimeters.
+
+  - name: dim_date
+    description: >
+      Date dimension derived from distinct order purchase dates in erp_orders.
+      Contains one row per date that appears in the orders dataset. Includes
+      calendar attributes for time-based analysis.
+    columns:
+      - name: date_day
+        description: Primary key. Calendar date.
+      - name: year
+        description: Calendar year.
+      - name: quarter
+        description: Calendar quarter (1-4).
+      - name: month
+        description: Calendar month number (1-12).
+      - name: month_name
+        description: Full month name (e.g. January).
+      - name: week_of_year
+        description: Week number within the year.
+      - name: day_of_month
+        description: Day number within the month.
+      - name: day_of_week
+        description: Day number within the week (1 = Sunday, 7 = Saturday in BigQuery).
+      - name: day_name
+        description: Full day name (e.g. Monday).
+      - name: is_weekend
+        description: True if the date falls on a Saturday or Sunday.
+      - name: first_day_of_month
+        description: First calendar date of the month.
+      - name: last_day_of_month
+        description: Last calendar date of the month.
