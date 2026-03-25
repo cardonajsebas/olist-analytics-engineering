@@ -156,3 +156,24 @@ The following issues originate in the source dataset and are documented rather t
 | `crm_order_reviews` | 789 duplicate `review_id` values | `review_id` cannot be used as a reliable primary key |
 | `erp_products` | 610 rows with null `product_category_name` | `product_category_name_english` is null for these products in Gold |
 
+
+## Environment Separation
+
+This project uses two dbt targets to separate development from production:
+
+| Target | Bronze source | Silver output | Gold output |
+|---|---|---|---|
+| `dev` (default) | `dev_bronze` | `dev_silver` | `dev_gold` |
+| `prod` | `bronze` | `silver` | `gold` |
+
+Local development always defaults to `dev`. CI/CD runs use `--target prod`.
+
+To run against a specific target:
+```bash
+# Development (default)
+dbt build --profiles-dir ~/.dbt
+
+# Production (CI/CD only)
+dbt build --target prod --profiles-dir ~/.dbt
+```
+

@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: bronze
     database: olist-analytics-eng
-    schema: bronze
+    schema: "{% if target.name == 'prod' %}bronze{% else %}dev_bronze{% endif %}"
     description: >
       Raw data ingested from GCS source files with no transformations applied.
       All columns are stored as STRING to preserve raw data integrity.
@@ -42,7 +42,7 @@ sources:
       - name: erp_products
         description: >
           Raw product catalog. Contains column name typos from the source system
-          (name_lenght, description_lenght) preserved intentionally at this layer.
+          preserved intentionally at this layer.
 
       - name: erp_sellers
         description: >
