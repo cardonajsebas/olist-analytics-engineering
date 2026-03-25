@@ -63,7 +63,10 @@ models:
   - name: dim_date
     description: >
       Date dimension derived from distinct order purchase dates in erp_orders.
-      Contains one row per date that appears in the orders dataset.
+      Contains one row per date that appears in the orders dataset. Includes
+      calendar attributes for year, quarter, month, week, day, and weekend
+      classification. Used as the time axis for all trend analysis in Gold.
+      Date range spans the full Olist order history from 2016 to 2018.
     columns:
       - name: date_day
         description: Primary key. Calendar date.
