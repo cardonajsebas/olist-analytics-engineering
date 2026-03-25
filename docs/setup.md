@@ -114,3 +114,45 @@ A reference template is available at `olist_dbt/profiles.yml.example`.
 ```
    All checks should return `OK`.
 
+## Running the Pipeline
+
+Once the environment is configured, run the full pipeline in order:
+
+### 1. Load raw data into Bronze
+```bash
+python ingestion/load_bronze.py
+```
+
+### 2. Build all models and run all tests
+```bash
+cd olist_dbt
+dbt build --profiles-dir ~/.dbt
+```
+
+`dbt build` runs models and tests in dependency order. If a Silver model fails its tests, downstream Gold models are skipped automatically.
+
+### Running models and tests independently
+```bash
+# Run all models
+dbt run --profiles-dir ~/.dbt
+
+# Run all tests
+dbt test --profiles-dir ~/.dbt
+
+# Run a specific layer
+dbt build --select 'silver' --profiles-dir ~/.dbt
+dbt build --select 'gold' --profiles-dir ~/.dbt
+
+# Run only singular tests
+dbt test --select 'test_type:singular' --profiles-dir ~/.dbt
+```
+
+## Known Data Quality Issues
+
+The following issues originate in the source dataset and are documented rather than corrected, as Bronze preserves raw data as-is.
+
+| Table | Issue | Impact |
+|---|---|---|
+| `crm_order_reviews` | 789 duplicate `review_id` values | `review_id` cannot be used as a reliable primary key |
+| `erp_products` | 610 rows with null `product_category_name` | `product_category_name_english` is null for these products in Gold |
+

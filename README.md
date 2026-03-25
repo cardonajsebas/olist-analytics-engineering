@@ -39,7 +39,7 @@ Following the same Medallion Architecture established in Phase 1, now implemente
 |---|---|---|
 | Bronze | Table | Raw data loaded from GCS as-is, no transformations |
 | Silver | Table | Cleaned, typed, and standardized models (1:1 with Bronze) |
-| Gold | View | Business-ready Star Schema for analytical consumption |
+| Gold | View | Business-ready Star Schema for analytical consumption with generic and singular dbt tests |
 
 ---
 
@@ -64,8 +64,8 @@ This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/ol
 |---|---|---|
 | 1 - GCP Foundation & Raw Ingestion | Cloud infrastructure setup and raw data loading into BigQuery Bronze | Done |
 | 2 - dbt Setup & Silver Layer | dbt project initialization and Bronze-to-Silver transformation models | Done |
-| 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | In progress |
-| 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | Planned |
+| 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | Done |
+| 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | In progress |
 | 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | Planned |
 
 ---
@@ -132,17 +132,33 @@ pip install -r requirements.txt
 python ingestion/load_bronze.py
 ```
 
-### 4. Run Silver models
+### 4. Validate Bronze load
+```bash
+bq query --project_id=YOUR_PROJECT_ID --use_legacy_sql=false \
+  < ingestion/validation/validate_row_counts.sql
+```
+
+### 5. Run Silver models
 ```bash
 cd olist_dbt
 dbt run --select 'silver' --profiles-dir ~/.dbt
 ```
 
-### 5. Validate Bronze load
+### 5. Run Gold models
 ```bash
-bq query --project_id=YOUR_PROJECT_ID --use_legacy_sql=false \
-  < ingestion/validation/validate_row_counts.sql
+dbt run --select 'gold' --profiles-dir ~/.dbt
 ```
+
+### 6. Run the full test suite
+```bash
+dbt test --profiles-dir ~/.dbt
+```
+
+Or run models and tests together in dependency order:
+```bash
+dbt build --profiles-dir ~/.dbt
+```
+
 
 ---
 
