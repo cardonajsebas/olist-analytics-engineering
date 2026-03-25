@@ -65,8 +65,8 @@ This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/ol
 | 1 - GCP Foundation & Raw Ingestion | Cloud infrastructure setup and raw data loading into BigQuery Bronze | Done |
 | 2 - dbt Setup & Silver Layer | dbt project initialization and Bronze-to-Silver transformation models | Done |
 | 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | Done |
-| 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | In progress |
-| 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | Planned |
+| 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | Done |
+| 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | In progress |
 
 ---
 
