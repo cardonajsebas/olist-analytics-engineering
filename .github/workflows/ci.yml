@@ -1,0 +1,58 @@
+name: CI - dbt build on pull request
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'olist_dbt/**'
+      - 'requirements.txt'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  dbt-build:
+    name: Run dbt build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create dbt profiles directory
+        run: mkdir -p ~/.dbt
+
+      - name: Write dbt profiles.yml
+        run: |
+          cat > ~/.dbt/profiles.yml << 'PROFILE'
+          olist_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: prod
+                threads: 4
+                location: us-central1
+                timeout_seconds: 300
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          PROFILE
+
+      - name: Run dbt build
+        working-directory: olist_dbt
+        run: dbt build --target prod --profiles-dir ~/.dbt
+
