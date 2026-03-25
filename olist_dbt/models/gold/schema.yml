@@ -99,3 +99,55 @@ models:
         description: First calendar date of the month.
       - name: last_day_of_month
         description: Last calendar date of the month.
+
+  - name: fact_orders
+    description: >
+      Core fact model at order-item grain. One row per order item. Joins
+      erp_order_items with erp_orders and aggregated erp_order_payments.
+      Contains foreign keys to all four dimension tables and pre-calculated
+      delivery and payment metrics.
+    columns:
+      - name: order_id
+        description: Foreign key to dim_date (via order_date) and order header identifier.
+      - name: order_item_id
+        description: Sequential item number within the order. Composite key with order_id.
+      - name: product_id
+        description: Foreign key to dim_products.
+      - name: seller_id
+        description: Foreign key to dim_sellers.
+      - name: customer_id
+        description: Foreign key to dim_customers.
+      - name: order_date
+        description: Foreign key to dim_date. Date portion of order_purchase_timestamp.
+      - name: order_status
+        description: Current order status.
+      - name: order_purchase_timestamp
+        description: Timestamp when the order was placed.
+      - name: order_approved_at
+        description: Timestamp when payment was approved.
+      - name: order_delivered_carrier_date
+        description: Timestamp when the order was handed to the carrier.
+      - name: order_delivered_customer_date
+        description: Timestamp when the order was delivered to the customer.
+      - name: order_estimated_delivery_date
+        description: Estimated delivery timestamp provided at purchase time.
+      - name: price
+        description: Item price in BRL.
+      - name: freight_value
+        description: Freight cost for the item in BRL.
+      - name: total_item_value
+        description: Sum of price and freight_value for the item in BRL.
+      - name: total_payment_value
+        description: Total payment value for the order across all payment entries in BRL.
+      - name: max_payment_installments
+        description: Maximum number of installments used across payment entries for the order.
+      - name: payment_type_count
+        description: Number of distinct payment types used for the order.
+      - name: delivery_time_days
+        description: Days between order purchase and customer delivery. Null if not delivered.
+      - name: days_early_or_late
+        description: >
+          Days between estimated and actual delivery. Positive means delivered early,
+          negative means delivered late. Null if not delivered.
+      - name: is_delivered
+        description: True if order_status is delivered.
