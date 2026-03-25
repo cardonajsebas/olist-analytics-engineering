@@ -9,35 +9,52 @@ models:
     columns:
       - name: customer_id
         description: Primary key. Unique identifier for the customer in this order context.
+        tests:
+          - not_null
+          - unique
       - name: customer_unique_id
         description: Persistent customer identifier across multiple orders.
+        tests:
+          - not_null
       - name: customer_zip_code_prefix
         description: 5-character zip code prefix, left-padded with zeros.
+        tests:
+          - not_null
       - name: customer_city
         description: Customer city, lowercased and trimmed.
+        tests:
+          - not_null
       - name: customer_state
         description: Customer state code, uppercased (2 characters).
+        tests:
+          - not_null
 
   - name: crm_order_reviews
     description: >
       Cleaned customer review records. Review score validated to range 1-5,
       out-of-range values set to null. Empty comment fields converted to null.
       Rows missing review_id or order_id are excluded.
+      Known issue: review_id is not unique in the source dataset (789 duplicates).
+      A single review_id can appear across multiple orders in the Olist dataset.
     columns:
       - name: review_id
-        description: Primary key. Unique identifier for the review.
+        description: >
+          Review identifier. Not a reliable primary key as duplicates exist in
+          the source dataset. See known issues in project documentation.
+        tests:
+          - not_null
       - name: order_id
         description: Foreign key to erp_orders.
+        tests:
+          - not_null
       - name: review_score
         description: Customer satisfaction score from 1 to 5. Null if original value was out of range.
-      - name: review_comment_title
-        description: Optional review title. Null if empty in source.
-      - name: review_comment_message
-        description: Optional review body text. Null if empty in source.
-      - name: review_creation_date
-        description: Timestamp when the review was created.
-      - name: review_answer_timestamp
-        description: Timestamp when the review was answered.
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              quote: false
+              config:
+                where: "review_score is not null"
 
   - name: erp_orders
     description: >
@@ -46,20 +63,19 @@ models:
     columns:
       - name: order_id
         description: Primary key. Unique order identifier.
+        tests:
+          - not_null
+          - unique
       - name: customer_id
         description: Foreign key to crm_customers.
+        tests:
+          - not_null
       - name: order_status
         description: Current order status, lowercased.
-      - name: order_purchase_timestamp
-        description: Timestamp when the order was placed.
-      - name: order_approved_at
-        description: Timestamp when payment was approved. Null if not yet approved.
-      - name: order_delivered_carrier_date
-        description: Timestamp when the order was handed to the carrier. Null if not yet shipped.
-      - name: order_delivered_customer_date
-        description: Timestamp when the order was delivered. Null if not yet delivered.
-      - name: order_estimated_delivery_date
-        description: Estimated delivery timestamp provided at purchase time.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['delivered', 'shipped', 'canceled', 'invoiced', 'processing', 'unavailable', 'approved', 'created']
 
   - name: erp_order_items
     description: >
@@ -68,18 +84,28 @@ models:
     columns:
       - name: order_id
         description: Foreign key to erp_orders.
+        tests:
+          - not_null
       - name: order_item_id
         description: Sequential item number within an order. Composite key with order_id.
+        tests:
+          - not_null
       - name: product_id
         description: Foreign key to erp_products.
+        tests:
+          - not_null
       - name: seller_id
         description: Foreign key to erp_sellers.
-      - name: shipping_limit_date
-        description: Deadline timestamp for the seller to ship the order.
+        tests:
+          - not_null
       - name: price
         description: Item price in BRL.
+        tests:
+          - not_null
       - name: freight_value
         description: Freight cost for the item in BRL.
+        tests:
+          - not_null
 
   - name: erp_order_payments
     description: >
@@ -88,14 +114,18 @@ models:
     columns:
       - name: order_id
         description: Foreign key to erp_orders.
-      - name: payment_sequential
-        description: Payment sequence number within an order.
+        tests:
+          - not_null
       - name: payment_type
-        description: Payment method (credit_card, boleto, voucher, debit_card), lowercased.
-      - name: payment_installments
-        description: Number of installments chosen by the customer.
+        description: Payment method, lowercased.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
       - name: payment_value
         description: Payment amount in BRL.
+        tests:
+          - not_null
 
   - name: erp_products
     description: >
@@ -105,22 +135,9 @@ models:
     columns:
       - name: product_id
         description: Primary key. Unique product identifier.
-      - name: product_category_name
-        description: Product category in Portuguese, lowercased.
-      - name: product_name_length
-        description: Character count of the product name. Renamed from product_name_lenght.
-      - name: product_description_length
-        description: Character count of the product description. Renamed from product_description_lenght.
-      - name: product_photos_qty
-        description: Number of product photos.
-      - name: product_weight_g
-        description: Product weight in grams.
-      - name: product_length_cm
-        description: Product length in centimeters.
-      - name: product_height_cm
-        description: Product height in centimeters.
-      - name: product_width_cm
-        description: Product width in centimeters.
+        tests:
+          - not_null
+          - unique
 
   - name: erp_sellers
     description: >
@@ -129,22 +146,9 @@ models:
     columns:
       - name: seller_id
         description: Primary key. Unique seller identifier.
-      - name: seller_zip_code_prefix
-        description: 5-character zip code prefix, left-padded with zeros.
-      - name: seller_city
-        description: Seller city, lowercased and trimmed.
-      - name: seller_state
-        description: Seller state code, uppercased (2 characters).
-
-  - name: erp_product_category_name_translation
-    description: >
-      Cleaned mapping table from Portuguese category names to English.
-      Both columns lowercased and trimmed.
-    columns:
-      - name: product_category_name
-        description: Product category name in Portuguese, lowercased.
-      - name: product_category_name_english
-        description: Product category name in English, lowercased.
+        tests:
+          - not_null
+          - unique
 
   - name: erp_geolocation
     description: >
@@ -154,12 +158,17 @@ models:
     columns:
       - name: geolocation_zip_code_prefix
         description: Primary key. 5-character zip code prefix, left-padded with zeros.
-      - name: geolocation_lat
-        description: Average latitude for the zip code prefix, rounded to 6 decimal places.
-      - name: geolocation_lng
-        description: Average longitude for the zip code prefix, rounded to 6 decimal places.
-      - name: geolocation_city
-        description: City name for the zip code prefix, lowercased.
-      - name: geolocation_state
-        description: State code for the zip code prefix, uppercased.
+        tests:
+          - not_null
+          - unique
 
+  - name: erp_product_category_name_translation
+    description: >
+      Cleaned mapping table from Portuguese category names to English.
+      Both columns lowercased and trimmed.
+    columns:
+      - name: product_category_name
+        description: Product category name in Portuguese, lowercased.
+        tests:
+          - not_null
+          - unique

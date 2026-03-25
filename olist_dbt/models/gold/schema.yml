@@ -9,18 +9,25 @@ models:
     columns:
       - name: customer_id
         description: Primary key. Unique customer identifier per order context.
+        tests:
+          - not_null
+          - unique
       - name: customer_unique_id
         description: Persistent customer identifier across multiple orders.
+        tests:
+          - not_null
       - name: customer_zip_code_prefix
         description: 5-character zip code prefix.
+        tests:
+          - not_null
       - name: customer_city
         description: Customer city, lowercased.
+        tests:
+          - not_null
       - name: customer_state
         description: Customer state code, uppercased.
-      - name: customer_lat
-        description: Latitude coordinate from geolocation. Null if zip code not found.
-      - name: customer_lng
-        description: Longitude coordinate from geolocation. Null if zip code not found.
+        tests:
+          - not_null
 
   - name: dim_sellers
     description: >
@@ -30,16 +37,9 @@ models:
     columns:
       - name: seller_id
         description: Primary key. Unique seller identifier.
-      - name: seller_zip_code_prefix
-        description: 5-character zip code prefix.
-      - name: seller_city
-        description: Seller city, lowercased.
-      - name: seller_state
-        description: Seller state code, uppercased.
-      - name: seller_lat
-        description: Latitude coordinate from geolocation. Null if zip code not found.
-      - name: seller_lng
-        description: Longitude coordinate from geolocation. Null if zip code not found.
+        tests:
+          - not_null
+          - unique
 
   - name: dim_products
     description: >
@@ -47,58 +47,29 @@ models:
       erp_products with erp_product_category_name_translation. Falls back
       to Portuguese category name if no translation exists. One row per
       product_id.
+      Known issue: 610 products have a null product_category_name in the source,
+      resulting in a null product_category_name_english with no fallback available.
     columns:
       - name: product_id
         description: Primary key. Unique product identifier.
-      - name: product_category_name
-        description: Product category in Portuguese.
+        tests:
+          - not_null
+          - unique
       - name: product_category_name_english
-        description: Product category in English. Falls back to Portuguese if no translation found.
-      - name: product_name_length
-        description: Character count of the product name.
-      - name: product_description_length
-        description: Character count of the product description.
-      - name: product_photos_qty
-        description: Number of product photos.
-      - name: product_weight_g
-        description: Product weight in grams.
-      - name: product_length_cm
-        description: Product length in centimeters.
-      - name: product_height_cm
-        description: Product height in centimeters.
-      - name: product_width_cm
-        description: Product width in centimeters.
+        description: >
+          Product category in English. Falls back to Portuguese if no translation
+          found. Null if product_category_name is null in the source.
 
   - name: dim_date
     description: >
       Date dimension derived from distinct order purchase dates in erp_orders.
-      Contains one row per date that appears in the orders dataset. Includes
-      calendar attributes for time-based analysis.
+      Contains one row per date that appears in the orders dataset.
     columns:
       - name: date_day
         description: Primary key. Calendar date.
-      - name: year
-        description: Calendar year.
-      - name: quarter
-        description: Calendar quarter (1-4).
-      - name: month
-        description: Calendar month number (1-12).
-      - name: month_name
-        description: Full month name (e.g. January).
-      - name: week_of_year
-        description: Week number within the year.
-      - name: day_of_month
-        description: Day number within the month.
-      - name: day_of_week
-        description: Day number within the week (1 = Sunday, 7 = Saturday in BigQuery).
-      - name: day_name
-        description: Full day name (e.g. Monday).
-      - name: is_weekend
-        description: True if the date falls on a Saturday or Sunday.
-      - name: first_day_of_month
-        description: First calendar date of the month.
-      - name: last_day_of_month
-        description: Last calendar date of the month.
+        tests:
+          - not_null
+          - unique
 
   - name: fact_orders
     description: >
@@ -109,45 +80,55 @@ models:
     columns:
       - name: order_id
         description: Foreign key to dim_date (via order_date) and order header identifier.
+        tests:
+          - not_null
       - name: order_item_id
         description: Sequential item number within the order. Composite key with order_id.
+        tests:
+          - not_null
       - name: product_id
         description: Foreign key to dim_products.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_id
       - name: seller_id
         description: Foreign key to dim_sellers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_sellers')
+              field: seller_id
       - name: customer_id
         description: Foreign key to dim_customers.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
       - name: order_date
-        description: Foreign key to dim_date. Date portion of order_purchase_timestamp.
+        description: Foreign key to dim_date.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
       - name: order_status
         description: Current order status.
-      - name: order_purchase_timestamp
-        description: Timestamp when the order was placed.
-      - name: order_approved_at
-        description: Timestamp when payment was approved.
-      - name: order_delivered_carrier_date
-        description: Timestamp when the order was handed to the carrier.
-      - name: order_delivered_customer_date
-        description: Timestamp when the order was delivered to the customer.
-      - name: order_estimated_delivery_date
-        description: Estimated delivery timestamp provided at purchase time.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['delivered', 'shipped', 'canceled', 'invoiced', 'processing', 'unavailable', 'approved', 'created']
       - name: price
         description: Item price in BRL.
+        tests:
+          - not_null
       - name: freight_value
         description: Freight cost for the item in BRL.
-      - name: total_item_value
-        description: Sum of price and freight_value for the item in BRL.
-      - name: total_payment_value
-        description: Total payment value for the order across all payment entries in BRL.
-      - name: max_payment_installments
-        description: Maximum number of installments used across payment entries for the order.
-      - name: payment_type_count
-        description: Number of distinct payment types used for the order.
-      - name: delivery_time_days
-        description: Days between order purchase and customer delivery. Null if not delivered.
-      - name: days_early_or_late
-        description: >
-          Days between estimated and actual delivery. Positive means delivered early,
-          negative means delivered late. Null if not delivered.
+        tests:
+          - not_null
       - name: is_delivered
         description: True if order_status is delivered.
+        tests:
+          - not_null
