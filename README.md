@@ -1,18 +1,21 @@
 # Olist Analytics Engineering
 
+[![CI - dbt build on pull request](https://github.com/cardonajsebas/olist-analytics-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/cardonajsebas/olist-analytics-engineering/actions/workflows/ci.yml)
+[![CD - dbt build on merge to main](https://github.com/cardonajsebas/olist-analytics-engineering/actions/workflows/cd.yml/badge.svg)](https://github.com/cardonajsebas/olist-analytics-engineering/actions/workflows/cd.yml)
+
 An end-to-end analytics engineering platform built on the [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) public dataset. This project migrates the data warehouse built in [Phase 1](https://github.com/cardonajsebas/olist-data-warehouse) to a production-grade cloud stack using **dbt**, **BigQuery**, and **GCP**, with CI/CD automation through **GitHub Actions**.
 
 > Built as a portfolio project to demonstrate analytics engineering practices including cloud infrastructure, transformation pipelines, data quality testing, and deployment automation.
+
+**Data catalog and lineage graph:** [cardonajsebas.github.io/olist-analytics-engineering](https://cardonajsebas.github.io/olist-analytics-engineering)
 
 ---
 
 ## Context
 
-This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). 
-The architecture and migration plan were designed prior to implementation and are documented in the [Roadmap](#roadmap) section below. Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
+This project is the second phase of a data warehouse initiative. Phase 1 established the data model and ETL pipeline using PostgreSQL and a Medallion Architecture (Bronze, Silver, Gold). The architecture and migration plan were designed prior to implementation and are documented in the [Roadmap](#roadmap) section below. Phase 2 lifts that foundation to the cloud, replacing manual SQL scripts with dbt models and introducing automated testing and deployment.
 
-If you are not familiar with Phase 1, it is recommended to review it first: 
-[olist-data-warehouse](https://github.com/cardonajsebas/olist-data-warehouse).
+If you are not familiar with Phase 1, it is recommended to review it first: [olist-data-warehouse](https://github.com/cardonajsebas/olist-data-warehouse).
 
 ---
 
@@ -25,7 +28,7 @@ If you are not familiar with Phase 1, it is recommended to review it first:
 | Storage | GCS | Raw CSV files stored as the landing zone |
 | Warehouse | BigQuery | Columnar analytical engine hosting all layers |
 | Transformation | dbt Core | Models, tests, and documentation across Bronze, Silver, and Gold |
-| Orchestration | Python + GCS | Initial load scripts; scheduling TBD |
+| Orchestration | Python + GCS | Initial load scripts |
 | CI/CD | GitHub Actions | Automated testing and deployment on pull requests and merges |
 | Documentation | dbt docs | Auto-generated data catalog and lineage graph |
 
@@ -38,8 +41,26 @@ Following the same Medallion Architecture established in Phase 1, now implemente
 | Layer | Materialization | Description |
 |---|---|---|
 | Bronze | Table | Raw data loaded from GCS as-is, no transformations |
-| Silver | Table | Cleaned, typed, and standardized models (1:1 with Bronze) |
-| Gold | View | Business-ready Star Schema for analytical consumption with generic and singular dbt tests |
+| Silver | Table | Cleaned, typed, and standardized models (1:1 with Bronze sources) |
+| Gold | View | Business-ready Star Schema with generic and singular dbt tests |
+
+---
+
+## Data Model
+
+The Gold layer implements a Star Schema with one fact table and four dimension tables, all materialized as views derived from Silver.
+
+| Model | Type | Grain | Description |
+|---|---|---|---|
+| `fact_orders` | Fact | One row per order item | Core analytical model joining orders, items, and payments |
+| `dim_customers` | Dimension | One row per customer | Customer records enriched with geolocation coordinates |
+| `dim_products` | Dimension | One row per product | Product catalog enriched with English category names |
+| `dim_sellers` | Dimension | One row per seller | Seller records enriched with geolocation coordinates |
+| `dim_date` | Dimension | One row per date | Calendar attributes derived from order purchase timestamps |
+
+`fact_orders` joins to all four dimensions: `customer_id` to `dim_customers`, `product_id` to `dim_products`, `seller_id` to `dim_sellers`, and `order_date` to `dim_date`.
+
+The full lineage graph is available in the [dbt docs site](https://cardonajsebas.github.io/olist-analytics-engineering).
 
 ---
 
@@ -56,6 +77,21 @@ Following the same Medallion Architecture established in Phase 1, now implemente
 
 ---
 
+## CI/CD
+
+This project uses two GitHub Actions workflows to automate testing and deployment.
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| CI - dbt build on pull request | Pull request to `main` | Runs `dbt build --target prod` as a quality gate. Blocks merge if any model or test fails. |
+| CD - dbt build on merge to main | Push to `main` | Runs `dbt build --target prod` to deploy the latest approved models to prod BigQuery datasets. |
+
+Both workflows authenticate to GCP using a dedicated CI service account with minimum required permissions (`roles/bigquery.dataEditor` and `roles/bigquery.jobUser`). Credentials are stored as GitHub Actions secrets and never appear in logs or version control.
+
+A third workflow publishes the dbt documentation site to GitHub Pages on every merge to main.
+
+---
+
 ## Project Status
 
 This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/olist-analytics-engineering/projects).
@@ -66,7 +102,7 @@ This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/ol
 | 2 - dbt Setup & Silver Layer | dbt project initialization and Bronze-to-Silver transformation models | Done |
 | 3 - dbt Gold Layer & Data Quality | Star Schema models and automated data quality tests | Done |
 | 4 - CI/CD with GitHub Actions | Automated testing and deployment pipeline | Done |
-| 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | In progress |
+| 5 - Documentation & Portfolio Polish | dbt docs site, lineage graph, and README completion | Done |
 
 ---
 
@@ -76,22 +112,29 @@ This project is tracked on [GitHub Projects](https://github.com/cardonajsebas/ol
 olist-analytics-engineering/
 │
 ├── .github/
-│   └── workflows/                  # GitHub Actions CI/CD workflows
+│   └── workflows/
+│       ├── ci.yml                  # dbt build on pull requests
+│       ├── cd.yml                  # dbt build on merge to main
+│       └── docs.yml                # dbt docs publish to GitHub Pages
 │
 ├── ingestion/                      # Python scripts for GCS and BigQuery loading
+│   ├── ddl/
+│   │   └── bronze/                 # Bronze table DDL scripts
+│   ├── validation/                 # Bronze layer validation SQL scripts
+│   ├── load_bronze.py              # Main ingestion script
+│   └── manifest.json               # Table-to-GCS path mapping
 │
 ├── olist_dbt/                      # dbt project root
 │   ├── models/
-│   │   ├── bronze/                 # Raw ingestion models
+│   │   ├── bronze/                 # Source definitions
 │   │   ├── silver/                 # Cleaning and standardization models
 │   │   └── gold/                   # Analytical Star Schema models
-│   ├── tests/                      # Custom dbt tests
-│   ├── macros/                     # Reusable dbt macros
-│   ├── docs/                       # dbt model documentation (.md files)
+│   ├── tests/                      # Custom singular tests
+│   ├── macros/                     # generate_schema_name macro
 │   ├── dbt_project.yml
 │   └── profiles.yml.example
 │
-├── docs/                           # Architecture diagrams and project documentation
+├── docs/                           # Architecture diagrams and setup documentation
 │
 ├── .env.example
 ├── README.md
@@ -118,9 +161,11 @@ See [docs/setup.md](docs/setup.md) for step-by-step setup instructions.
 ## How to Run
 
 ### 1. Environment setup
+
 Follow [docs/setup.md](docs/setup.md) to configure GCP credentials and the dbt profile.
 
 ### 2. Install dependencies
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -128,37 +173,40 @@ pip install -r requirements.txt
 ```
 
 ### 3. Load Bronze layer
+
 ```bash
 python ingestion/load_bronze.py
 ```
 
 ### 4. Validate Bronze load
+
 ```bash
 bq query --project_id=YOUR_PROJECT_ID --use_legacy_sql=false \
   < ingestion/validation/validate_row_counts.sql
 ```
 
-### 5. Run Silver models
+### 5. Build all models and run all tests
+
 ```bash
 cd olist_dbt
-dbt run --select 'silver' --profiles-dir ~/.dbt
-```
-
-### 5. Run Gold models
-```bash
-dbt run --select 'gold' --profiles-dir ~/.dbt
-```
-
-### 6. Run the full test suite
-```bash
-dbt test --profiles-dir ~/.dbt
-```
-
-Or run models and tests together in dependency order:
-```bash
 dbt build --profiles-dir ~/.dbt
 ```
 
+`dbt build` runs models and tests in dependency order. If a Silver model fails its tests, downstream Gold models are skipped automatically.
+
+### Running models and tests independently
+
+```bash
+# Run a specific layer
+dbt run --select 'silver' --profiles-dir ~/.dbt
+dbt run --select 'gold' --profiles-dir ~/.dbt
+
+# Run all tests
+dbt test --profiles-dir ~/.dbt
+
+# Run only singular tests
+dbt test --select 'test_type:singular' --profiles-dir ~/.dbt
+```
 
 ---
 
@@ -166,23 +214,23 @@ dbt build --profiles-dir ~/.dbt
 
 **Milestone 1 - GCP Foundation & Raw Ingestion**
 
-Set up the GCP project, enable required services, configure IAM, create the GCS bucket and BigQuery datasets, and build Python scripts to load the 9 raw Olist CSVs into BigQuery Bronze tables.
+GCP project provisioned, APIs enabled, IAM service accounts configured. GCS bucket created with source-system folder structure (`crm/`, `erp/`). BigQuery Bronze datasets provisioned and all 9 source CSVs loaded via a data-driven Python ingestion script. Bronze validation confirmed row counts, nulls, and schema integrity.
 
 **Milestone 2 - dbt Setup & Silver Layer**
 
-Initialize the dbt project connected to BigQuery. Migrate Bronze-to-Silver cleaning logic from Phase 1 SQL scripts into dbt models, applying correct materializations and source definitions.
+dbt Core initialized with BigQuery adapter. Bronze sources declared in `sources.yml`. All 9 Silver models implemented covering type casting, standardization, deduplication, and null handling. Custom `generate_schema_name` macro implemented for dev and prod environment routing.
 
 **Milestone 3 - dbt Gold Layer & Data Quality**
 
-Build the Star Schema (fact and dimension models) as dbt Gold models. Implement dbt generic and singular tests covering completeness, uniqueness, referential integrity, and business rule validation.
+Star Schema implemented as dbt Gold views: `fact_orders` at order-item grain and four dimension models. Generic dbt tests added across Silver and Gold covering uniqueness, non-null constraints, accepted values, and referential integrity. Four custom singular tests validate business rules including delivery date ordering and price positivity.
 
 **Milestone 4 - CI/CD with GitHub Actions**
 
-Configure GitHub Actions to run `dbt test` on every pull request and `dbt run` on every merge to main. Introduce environment separation between dev and prod BigQuery datasets.
+Dedicated CI service account created with least-privilege roles. Dev and prod environments separated via dbt target routing. GitHub Actions CI workflow runs `dbt build` on every pull request. CD workflow deploys to prod on every merge to main. Full pipeline runs in under 90 seconds.
 
 **Milestone 5 - Documentation & Portfolio Polish**
 
-Generate and publish the dbt documentation site to GitHub Pages. Complete the data catalog, model descriptions, and column-level documentation. Finalize the README.
+dbt documentation site generated and published to GitHub Pages via GitHub Actions. Live catalog and lineage graph accessible publicly. README finalized with Data Model section, CI/CD documentation, and workflow status badges. Repository topics and metadata optimized.
 
 ---
 
