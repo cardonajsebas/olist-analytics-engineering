@@ -1,0 +1,67 @@
+name: Publish dbt docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'olist_dbt/**'
+      - 'requirements.txt'
+      - '.github/workflows/docs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-docs:
+    name: Generate and publish dbt docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create dbt profiles directory
+        run: mkdir -p ~/.dbt
+
+      - name: Write dbt profiles.yml
+        run: |
+          cat > ~/.dbt/profiles.yml << 'PROFILE'
+          olist_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: prod
+                threads: 4
+                location: us-central1
+                timeout_seconds: 300
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          PROFILE
+
+      - name: Generate dbt docs
+        working-directory: olist_dbt
+        run: dbt docs generate --target prod --profiles-dir ~/.dbt
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: olist_dbt/target
+          publish_branch: gh-pages
